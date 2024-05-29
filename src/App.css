@@ -1,0 +1,56 @@
+.container {
+    text-align: center;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: auto;
+}
+
+h1 {
+    font-size: 2em;
+    margin-bottom: 20px;
+}
+
+.wallet-section {
+    margin-bottom: 20px;
+}
+
+.connect-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.connect-button:hover {
+    background-color: #0056b3;
+}
+
+.links-section {
+    margin-top: 20px;
+}
+
+.links-section ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+.links-section li {
+    margin: 10px 0;
+}
+
+.links-section a {
+    color: #007bff;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.links-section a:hover {
+    color: #0056b3;
+}
