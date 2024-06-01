@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import './App.css';
 
 function App() {
     const [address, setAddress] = useState(null);
+    const [processId, setProcessId] = useState('');
+    const [terminalUrl, setTerminalUrl] = useState('');
+    const terminalContainerRef = useRef(null);
 
     const connectWallet = async () => {
         if (window.arweaveWallet) {
@@ -18,6 +21,17 @@ function App() {
         }
     };
 
+    const openTerminal = () => {
+        if (processId) {
+            setTerminalUrl(`https://sh_ao.g8way.io/?processId=${processId}`);
+            if (terminalContainerRef.current) {
+                terminalContainerRef.current.style.display = 'block';
+            }
+        } else {
+            alert('Please enter a process ID.');
+        }
+    };
+
     return (
         <div className="container">
             <h1>Welcome to, Hyper. Parallel. Computer.</h1>
@@ -28,6 +42,22 @@ function App() {
                     <button className="connect-button" onClick={connectWallet}>Connect Wallet</button>
                 )}
             </div>
+            {address && (
+                <div className="process-section">
+                    <input
+                        type="text"
+                        placeholder="Enter Process ID"
+                        value={processId}
+                        onChange={(e) => setProcessId(e.target.value)}
+                    />
+                    <button className="process-button" onClick={openTerminal}>Open Terminal</button>
+                </div>
+            )}
+            {terminalUrl && (
+                <div ref={terminalContainerRef} className="terminal-container">
+                    <iframe title="AOS Terminal" src={terminalUrl}></iframe>
+                </div>
+            )}
             <div className="links-section">
                 <h2>Useful Links</h2>
                 <ul>
