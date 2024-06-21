@@ -1,20 +1,44 @@
-
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import Grid from '@mui/material/Grid';
+import CardHeader from "@mui/material/CardHeader";
+import CardContent from "@mui/material/CardContent";
+import TextField from "@mui/material/TextField";
+import InputAdornment from "@mui/material/InputAdornment";
+import Button from "@mui/material/Button";
+import { ConnectButton, useActiveAddress } from "arweave-wallet-kit";
+import AoConnect from './AoConnect.js';
+import { Terminal } from "xterm";
+import { FitAddon } from "xterm-addon-fit";
+import { Readline } from "xterm-readline";
+import 'xterm/css/xterm.css';
 import './App.css';
 
 function App() {
-    const [address, setAddress] = useState(null);
-    const [processId, setProcessId] = useState('');
-    const [terminalUrl, setTerminalUrl] = useState('');
+    const [processName, setProcessName] = useState("default");
+    const [connecting, setConnecting] = useState(false);
+    const [connectProcessId, setConnectProcessId] = useState("");
+    const [contentedAddress, setContentedAddress] = useState("");
+    const [loadText, setLoadText] = useState("");
+    const [terminalUrl, setTerminalUrl] = useState("");
     const terminalContainerRef = useRef(null);
+
+    const activeAddress = useActiveAddress();
+
+    useEffect(() => {
+        queryAllProcesses(activeAddress);
+        setContentedAddress(activeAddress);
+    }, [activeAddress]);
 
     const connectWallet = async () => {
         if (window.arweaveWallet) {
             try {
                 await window.arweaveWallet.connect(['ACCESS_ADDRESS', 'ACCESS_PUBLIC_KEY']);
                 const addr = await window.arweaveWallet.getActiveAddress();
-                setAddress(addr);
+                setContentedAddress(addr);
             } catch (error) {
                 console.error('Error connecting to wallet:', error);
             }
@@ -23,54 +47,81 @@ function App() {
         }
     };
 
-    const openTerminal = () => {
-        if (processId) {
-            setTerminalUrl(`https://placeholder.com/?processId=${processId}`);
-            if (terminalContainerRef.current) {
-                terminalContainerRef.current.style.display = 'block';
+    const spawnProcess = () => {
+        if (window.arweaveWallet && processName) {
+            const tags = [
+                { name: "App-Name", value: "aos" },
+                { name: "aos-Version", value: "1.10.30" },
+                { name: "Name", value: processName },
+            ];
+            AoConnect.AoCreateProcess(window.arweaveWallet, AoConnect.DEFAULT_MODULE, AoConnect.DEFAULT_SCHEDULER, tags).then(processId => {
+                setConnectProcessId(processId);
+                setTerminalUrl(`https://placeholder.com/?processId=${processId}`);
+                setConnecting(false);
+            });
+        }
+    };
+
+    const queryAllProcesses = (address) => {
+        if (address && contentedAddress === address) {
+            if (processName.length === 43) {
+                const processId = processName;
+                setConnectProcessId(processId);
+                setTerminalUrl(`https://placeholder.com/?processId=${processId}`);
+            } else {
+                AoConnect.AoQueryProcesses(address, processName).then(processInfoList => {
+                    if (processInfoList && processInfoList.length > 0) {
+                        const processId = processInfoList[0].id;
+                        setConnectProcessId(processId);
+                        setTerminalUrl(`https://placeholder.com/?processId=${processId}`);
+                        setConnecting(false);
+                    } else {
+                        spawnProcess();
+                    }
+                });
             }
         }
     };
 
     return (
-        <div className="container">
-            <h1>Welcome to, Hyper. Parallel. Computer.</h1>
-            <div className="wallet-section">
-                {address ? (
-                    <p>Connected wallet address: {address}</p>
-                ) : (
-                    <button className="connect-button" onClick={connectWallet}>Connect Wallet</button>
+        <Container>
+            <Typography variant="h2" component="h1" gutterBottom>
+                Hyper. Parallel. Computer.
+            </Typography>
+            <Box sx={{ my: 4 }}>
+                <Card>
+                    <CardHeader title="Connect to Arweave Wallet" />
+                    <CardContent>
+                        <ConnectButton />
+                    </CardContent>
+                </Card>
+                {contentedAddress && (
+                    <Card>
+                        <CardHeader title="Enter Process ID or Name" />
+                        <CardContent>
+                            <TextField
+                                fullWidth
+                                placeholder="Process Name"
+                                value={processName}
+                                onChange={(e) => setProcessName(e.target.value)}
+                                InputProps={{
+                                    startAdornment: <InputAdornment position="start">ID</InputAdornment>,
+                                }}
+                            />
+                            <Button variant="contained" color="primary" onClick={spawnProcess} disabled={connecting}>
+                                {connecting ? 'Connecting...' : 'Open Terminal'}
+                            </Button>
+                        </CardContent>
+                    </Card>
                 )}
-            </div>
-            {address && (
-                <div className="process-section">
-                    <input
-                        type="text"
-                        placeholder="Enter Process ID"
-                        value={processId}
-                        onChange={(e) => setProcessId(e.target.value)}
-                    />
-                    <button className="process-button" onClick={openTerminal}>Open Terminal</button>
-                </div>
-            )}
-            {terminalUrl && (
-                <div ref={terminalContainerRef} className="terminal-container">
-                    <iframe title="AOS Terminal" src={terminalUrl}></iframe>
-                </div>
-            )}
-            <div className="links-section">
-                <h2>Useful Links</h2>
-                <ul>
-                    <li><a href="https://discord.gg/du2mbc9P" target="_blank" rel="noopener noreferrer">Discord</a></li>
-                    <li><a href="https://x.com/aoTheComputer" target="_blank" rel="noopener noreferrer">Twitter</a></li>
-                    <li><a href="https://cookbook_ao.g8way.io/" target="_blank" rel="noopener noreferrer">Get Started With AO Cookbook</a></li>
-                    <li><a href="https://ao.arweave.dev/" target="_blank" rel="noopener noreferrer">AO</a></li>
-                </ul>
-            </div>
-        </div>
+                {terminalUrl && (
+                    <Box ref={terminalContainerRef} sx={{ mt: 4 }}>
+                        <iframe title="AOS Terminal" src={terminalUrl} width="100%" height="500px"></iframe>
+                    </Box>
+                )}
+            </Box>
+        </Container>
     );
 }
 
 export default App;
-
-
