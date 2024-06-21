@@ -1,4 +1,4 @@
-Here is the updated `App.js` file with a placeholder URL implementation:
+
 
 ```javascript
 import React, { useState, useRef } from 'react';
@@ -75,4 +75,3 @@ function App() {
 export default App;
 ```
 
-This updated file uses `https://placeholder.com/?processId=${processId}` as the placeholder URL for the terminal. You can replace this with the actual URL when it's available.
